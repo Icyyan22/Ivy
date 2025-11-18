@@ -9,5 +9,6 @@
 3. uv sync 一下
 4. 在config.py中修改一下自己的账号密码
 5. source .venv/bin/activate
-6. python main.py
-7. 有任何问题请提request（虽然大概率没时间看ß）
+6. playwright install chrome
+7. python main.py
+8. 有任何问题请提request（虽然大概率没时间看ß）
