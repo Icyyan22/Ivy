@@ -54,18 +54,60 @@ def print_banner():
     banner = """
     ╔═══════════════════════════════════════════════════════════╗
     ║                                                           ║
-    ║          视频学习网站自动化脚本 v2.0 (简化版)              ║
+    ║          党课学习 v2.0                                     ║
     ║          Video Learning Automation Script                 ║
     ║                                                           ║
-    ║          功能:                                            ║
-    ║          • 手动登录（支持验证码）                         ║
-    ║          • 自动播放视频列表                               ║
-    ║          • 自动处理"继续"弹窗                             ║
-    ║          • 检测"播放完成"自动切换                         ║
+    ║          功能:                                             ║
+    ║          • 手动登录（支持验证码）                             ║
+    ║          • 自动播放视频列表                                  ║
+    ║          • 自动处理"继续"弹窗                                ║
+    ║          • 检测"播放完成"自动切换                            ║
     ║                                                           ║
     ╚═══════════════════════════════════════════════════════════╝
     """
     print(banner)
+
+
+def print_disclaimer() -> bool:
+    """
+    打印免责声明并获取用户确认
+
+    Returns:
+        bool: 用户是否同意
+    """
+    disclaimer = """
+    ╔═══════════════════════════════════════════════════════════╗
+    ║                                                           ║
+    ║                    ⚠️  免责声明 / Disclaimer ⚠️            ║
+    ║                                                           ║
+    ╠═══════════════════════════════════════════════════════════╣
+    ║                                                           ║
+    ║  本脚本仅供实在没有时间的太理学子使用，请在空闲时间认真学习         ║
+    ║  This script is for learning and research purposes only.  ║
+    ║                                                           ║
+    ║  使用本脚本时请遵守：                                        ║
+    ║  • 相关法律法规                                             ║
+    ║  • 网站服务条款和使用协议                                     ║
+    ║  • 学校/机构的相关规定                                        ║
+    ║                                                            ║
+    ║  用户需自行承担使用本脚本所产生的一切后果和责任。                 ║
+    ║  开发者不对任何滥用行为负责。                                  ║
+    ║                                                           ║
+    ╚═══════════════════════════════════════════════════════════╝
+    """
+    print(disclaimer)
+
+    try:
+        response = input("输入 'yes' 确认并继续，或输入其他内容退出: ").strip().lower()
+        if response == 'yes':
+            print("\n✅ 已确认免责声明\n")
+            return True
+        else:
+            print("\n❌ 未确认免责声明，程序退出")
+            return False
+    except KeyboardInterrupt:
+        print("\n\n❌ 已取消")
+        return False
 
 
 def print_config_info(config: Config):
@@ -127,6 +169,10 @@ async def main():
     """主函数"""
     # 打印启动横幅
     print_banner()
+
+    # 显示免责声明并获取确认
+    if not print_disclaimer():
+        return
 
     # 加载配置
     config = Config()

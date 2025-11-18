@@ -5,6 +5,8 @@
 
 import asyncio
 import logging
+import os
+import requests
 from datetime import datetime
 from typing import Optional
 from pathlib import Path
@@ -58,8 +60,11 @@ class VideoAutomator:
             try:
                 self.session_active = True
 
-                # 步骤1: 打开登录页面，等待用户手动登录
-                await self._manual_login_flow()
+                # 步骤1: 登录（根据配置选择自动或手动）
+                if self.config.AUTO_LOGIN_ENABLED and self._validate_auto_login_config():
+                    await self._auto_login_flow()
+                else:
+                    await self._manual_login_flow()
 
                 # 步骤2: 遍历并播放视频列表
                 await self._play_video_list()
@@ -169,11 +174,19 @@ class VideoAutomator:
                 await self.page.goto(video_url, wait_until='domcontentloaded')
                 await asyncio.sleep(2)
 
+                # 处理进入视频页面时的弹窗（如"我知道了"按钮）
+                await self._handle_entry_popup()
+
                 # 播放视频
                 await self._play_single_video()
 
                 self.videos_completed += 1
                 logger.info(f"✅ 视频 {idx} 播放完成\n")
+
+                # 每个视频播放完成后重新登录（避免超时）
+                if self.config.AUTO_LOGIN_ENABLED and idx < self.total_videos:
+                    logger.info("重新登录以避免超时...")
+                    await self._auto_login_flow()
 
             except Exception as e:
                 logger.error(f"❌ 播放视频 {idx} 时出错: {e}")
@@ -187,6 +200,62 @@ class VideoAutomator:
                         break
                 except:
                     break
+
+    async def _handle_entry_popup(self):
+        """处理进入视频页面时的弹窗（如"我知道了"按钮）"""
+        logger.info("检查进入视频页面时的弹窗...")
+
+        try:
+            # 遍历所有可能的关闭按钮选择器
+            for selector in self.config.POPUP_CLOSE_SELECTORS:
+                try:
+                    button = await self.page.query_selector(selector)
+                    if button:
+                        is_visible = await button.is_visible()
+                        if is_visible:
+                            logger.info(f"检测到弹窗按钮: {selector}，正在点击...")
+                            await button.click()
+                            await asyncio.sleep(1)
+                            logger.info("✅ 已点击弹窗按钮")
+                            return True
+                except Exception as e:
+                    logger.debug(f"检查按钮 {selector} 时出错: {e}")
+                    continue
+
+            logger.debug("未检测到进入页面时的弹窗")
+            return False
+
+        except Exception as e:
+            logger.debug(f"处理进入页面弹窗时出错: {e}")
+            return False
+
+    async def _handle_completion_popup(self):
+        """处理视频播放完成后的弹窗（如"我知道了"按钮）"""
+        logger.info("检查视频完成后的弹窗...")
+
+        try:
+            # 遍历所有可能的关闭按钮选择器
+            for selector in self.config.POPUP_CLOSE_SELECTORS:
+                try:
+                    button = await self.page.query_selector(selector)
+                    if button:
+                        is_visible = await button.is_visible()
+                        if is_visible:
+                            logger.info(f"检测到完成弹窗按钮: {selector}，正在点击...")
+                            await button.click()
+                            await asyncio.sleep(1)
+                            logger.info("✅ 已点击完成弹窗按钮")
+                            return True
+                except Exception as e:
+                    logger.debug(f"检查按钮 {selector} 时出错: {e}")
+                    continue
+
+            logger.debug("未检测到完成弹窗按钮")
+            return False
+
+        except Exception as e:
+            logger.debug(f"处理完成弹窗时出错: {e}")
+            return False
 
     async def _play_single_video(self):
         """播放单个视频的完整流程"""
@@ -304,6 +373,10 @@ class VideoAutomator:
                     is_visible = await complete_popup.is_visible()
                     if is_visible:
                         logger.info("🎉 检测到'视频播放完成'弹窗")
+
+                        # 处理完成后的弹窗按钮（如"我知道了"）
+                        await self._handle_completion_popup()
+
                         logger.info(f"等待 {self.config.VIDEO_COMPLETE_WAIT} 秒后继续...")
                         await asyncio.sleep(self.config.VIDEO_COMPLETE_WAIT)
                         return  # 视频完成，退出等待
@@ -327,6 +400,10 @@ class VideoAutomator:
                     # 如果视频ended，也认为完成
                     if video_status.get('ended'):
                         logger.info("✅ 视频播放结束（通过video.ended检测）")
+
+                        # 处理完成后的弹窗按钮（如"我知道了"）
+                        await self._handle_completion_popup()
+
                         await asyncio.sleep(self.config.VIDEO_COMPLETE_WAIT)
                         return
 
@@ -375,6 +452,197 @@ class VideoAutomator:
             await self.browser.close()
 
         logger.info("资源清理完成")
+
+    # ===== 自动登录相关方法 =====
+
+    def _validate_auto_login_config(self) -> bool:
+        """验证自动登录配置是否完整"""
+        if not self.config.AUTO_LOGIN_ENABLED:
+            return False
+
+        missing = []
+        if not self.config.LOGIN_USERNAME:
+            missing.append("LOGIN_USERNAME")
+        if not self.config.LOGIN_PASSWORD:
+            missing.append("LOGIN_PASSWORD")
+        if not self.config.CAPTCHA_API_KEY:
+            missing.append("CAPTCHA_API_KEY")
+        if not self.config.CAPTCHA_API_BASE_URL:
+            missing.append("CAPTCHA_API_BASE_URL")
+
+        if missing:
+            logger.warning(f"自动登录配置不完整，缺少: {', '.join(missing)}")
+            logger.warning("请在 config.py 中填写相关配置")
+            return False
+
+        return True
+
+    async def _recognize_captcha(self) -> Optional[str]:
+        """
+        从验证码图片元素获取 URL 并使用 HTTP API 识别验证码
+
+        Returns:
+            str: 识别出的验证码文本，失败返回 None
+        """
+        try:
+            logger.info("正在获取验证码图片 URL...")
+
+            # 定位验证码图片元素
+            captcha_img = self.page.locator(f"xpath={self.config.LOGIN_CAPTCHA_IMAGE_XPATH}")
+
+            # 等待元素可见
+            await captcha_img.wait_for(state="visible", timeout=5000)
+
+            # 获取图片的 src 属性
+            captcha_url = await captcha_img.get_attribute("src")
+            if not captcha_url:
+                logger.error("无法获取验证码图片 URL")
+                return None
+
+            logger.info(f"验证码图片 URL: {captcha_url}")
+
+            # 调用 API 识别验证码
+            logger.info("正在调用 API 识别验证码...")
+
+            # 构建请求体
+            payload = {
+                "model": self.config.CAPTCHA_MODEL,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant."
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": self.config.CAPTCHA_PROMPT},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": captcha_url
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+
+            # 构建请求头
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": f"Bearer {self.config.CAPTCHA_API_KEY}"
+            }
+
+            # 发送 POST 请求
+            response = requests.post(
+                self.config.CAPTCHA_API_BASE_URL,
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
+
+            # 检查响应状态
+            if response.status_code != 200:
+                logger.error(f"API 请求失败，状态码: {response.status_code}")
+                logger.error(f"响应内容: {response.text}")
+                return None
+
+            # 解析响应
+            response_data = response.json()
+            captcha_text = response_data["choices"][0]["message"]["content"].strip()
+
+            logger.info(f"✅ 验证码识别结果: {captcha_text}")
+            return captcha_text
+
+        except Exception as e:
+            logger.error(f"验证码识别失败: {e}")
+            return None
+
+
+    async def _auto_login_flow(self) -> bool:
+        """
+        自动登录流程
+
+        Returns:
+            bool: 登录是否成功
+        """
+        logger.info("\n" + "=" * 60)
+        logger.info("开始自动登录流程")
+        logger.info("=" * 60)
+
+        # 验证配置
+        if not self._validate_auto_login_config():
+            logger.warning("自动登录配置不完整，降级为手动登录")
+            await self._manual_login_flow()
+            return True
+
+        # 导航到登录页面
+        try:
+            logger.info(f"正在打开登录页面: {self.config.VIDEO_SITE_URL}")
+            await self.page.goto(self.config.VIDEO_SITE_URL, wait_until='domcontentloaded')
+            await asyncio.sleep(2)
+        except Exception as e:
+            logger.error(f"打开登录页面失败: {e}")
+            return False
+
+        # 重试登录
+        for attempt in range(1, self.config.CAPTCHA_MAX_RETRIES + 1):
+            try:
+                logger.info(f"登录尝试 {attempt}/{self.config.CAPTCHA_MAX_RETRIES}")
+
+                # 1. 填写用户名
+                logger.info("填写用户名...")
+                username_input = self.page.locator(f"xpath={self.config.LOGIN_USERNAME_XPATH}")
+                await username_input.wait_for(state="visible", timeout=10000)
+                await username_input.clear()
+                await username_input.fill(self.config.LOGIN_USERNAME)
+
+                # 2. 填写密码
+                logger.info("填写密码...")
+                password_input = self.page.locator(f"xpath={self.config.LOGIN_PASSWORD_XPATH}")
+                await password_input.clear()
+                await password_input.fill(self.config.LOGIN_PASSWORD)
+
+                # 3. 识别验证码
+                captcha_text = await self._recognize_captcha()
+                if not captcha_text:
+                    logger.warning(f"识别验证码失败，尝试 {attempt + 1}")
+                    await asyncio.sleep(2)
+                    continue
+
+                # 4. 填写验证码
+                logger.info(f"填写验证码: {captcha_text}")
+                captcha_input = self.page.locator(f"xpath={self.config.LOGIN_CAPTCHA_INPUT_XPATH}")
+                await captcha_input.clear()
+                await captcha_input.fill(captcha_text)
+
+                # 5. 点击登录按钮
+                logger.info("点击登录按钮...")
+                login_button = self.page.locator(f"xpath={self.config.LOGIN_SUBMIT_BUTTON_XPATH}")
+                await login_button.click()
+
+                # 6. 等待登录结果
+                await asyncio.sleep(self.config.LOGIN_WAIT_AFTER_SUBMIT)
+
+                # 7. 检查是否登录成功（简单检查：URL是否变化或者不在登录页）
+                current_url = self.page.url
+                if self.config.VIDEO_SITE_URL not in current_url or "login" not in current_url.lower():
+                    logger.info("✅ 自动登录成功！")
+                    return True
+                else:
+                    logger.warning(f"登录可能失败（仍在登录页），尝试 {attempt + 1}")
+                    await asyncio.sleep(2)
+
+            except Exception as e:
+                logger.error(f"登录尝试 {attempt} 出错: {e}")
+                await asyncio.sleep(2)
+
+        # 所有尝试都失败
+        logger.error(f"❌ 自动登录失败（{self.config.CAPTCHA_MAX_RETRIES} 次尝试）")
+        logger.info("降级为手动登录...")
+        await self._manual_login_flow()
+        return False
 
 
 # 独立测试
