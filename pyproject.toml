@@ -1,0 +1,21 @@
+[project]
+name = "video-automation"
+version = "1.0.0"
+description = "视频学习网站自动化脚本 - 自动播放视频、处理弹窗、保持窗口焦点"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+
+dependencies = [
+    "playwright>=1.40.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+macos = [
+    "pyobjc-framework-Cocoa>=10.1",
+    "pyobjc-framework-Quartz>=10.1",
+]
+
+[dependency-groups]
+dev = []
