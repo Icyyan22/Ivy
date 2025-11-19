@@ -15,52 +15,52 @@ class Config:
     # 例如: ["/course/video/1", "/course/video/2"]
     VIDEO_HREF_LIST = [
         # "/ybdy/play?v_id=21612&r_id=80173&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21612&r_id=80174&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21612&r_id=80174&r=video&t=2&pg=1",
 
-        "/ybdy/play?v_id=21625&r_id=80198&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21625&r_id=80199&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21625&r_id=80200&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21625&r_id=80198&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21625&r_id=80199&r=video&t=2&pg=1",  11
+        # "/ybdy/play?v_id=21625&r_id=80200&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21626&r_id=80201&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21626&r_id=80202&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21626&r_id=80203&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21680&r_id=80281&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21680&r_id=80282&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21680&r_id=80283&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21681&r_id=80284&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21681&r_id=80285&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21682&r_id=80286&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21682&r_id=80287&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21741&r_id=80442&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21741&r_id=80443&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21749&r_id=80461&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21749&r_id=80462&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21749&r_id=80463&r=video&t=2&pg=1",
+        #
+        # "/ybdy/play?v_id=21750&r_id=80464&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21750&r_id=80465&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21750&r_id=80466&r=video&t=2&pg=1",
 
-        "/ybdy/play?v_id=21626&r_id=80201&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21626&r_id=80202&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21626&r_id=80203&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21680&r_id=80281&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21680&r_id=80282&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21680&r_id=80283&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21681&r_id=80284&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21681&r_id=80285&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21682&r_id=80286&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21682&r_id=80287&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21741&r_id=80442&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21741&r_id=80443&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21749&r_id=80461&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21749&r_id=80462&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21749&r_id=80463&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21750&r_id=80464&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21750&r_id=80465&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21750&r_id=80466&r=video&t=2&pg=1",
-
-        "/ybdy/play?v_id=21778&r_id=80540&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80541&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80542&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80543&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80544&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80545&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80546&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80547&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80548&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80549&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80550&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80551&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80540&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80541&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80542&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80543&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80544&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80545&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80546&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80547&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80548&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80549&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80550&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80551&r=video&t=2&pg=1",
         "/ybdy/play?v_id=21778&r_id=80552&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80553&r=video&t=2&pg=1",
-        "/ybdy/play?v_id=21778&r_id=80554&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80553&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21778&r_id=80554&r=video&t=2&pg=1",
         "/ybdy/play?v_id=21778&r_id=80555&r=video&t=2&pg=1",
         "/ybdy/play?v_id=21778&r_id=80556&r=video&t=2&pg=1",
         "/ybdy/play?v_id=21778&r_id=80557&r=video&t=2&pg=1",
@@ -70,8 +70,33 @@ class Config:
         "/ybdy/play?v_id=21800&r_id=80589&r=video&t=2&pg=1",
         "/ybdy/play?v_id=21800&r_id=80590&r=video&t=2&pg=1",
 
-        "/ybdy/play?v_id=21817&r=video&t=2",  # 到加强斗争井绳
+        "/ybdy/play?v_id=21817&r=video&t=2&pg=1",  # 到加强斗争井绳
 
+        "/ybdy/play?v_id=21829&r_id=80788&r=video&t=2&pg=1",
+        "/ybdy/play?v_id=21829&r_id=80789&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=21829&r_id=80790&r=video&t=2&pg=1"
+        
+        "/ybdy/play?v_id=21831&r_id=80793&r=video&t=2&pg=1",
+        "/ybdy/play?v_id=21831&r_id=80794&r=video&t=2&pg=1",
+        "/ybdy/play?v_id=21831&r_id=80795&r=video&t=2&pg=1",
+
+        "/ybdy/play?v_id=21834&r=video&t=2&pg=1"
+        
+        "/ybdy/play?v_id=22574&r_id=83249&r=video&t=2&pg=1",
+        "/ybdy/play?v_id=22574&r_id=83250&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83251&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83252&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83253&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83254&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83255&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83256&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83257&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83258&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83259&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=83260&r=video&t=2&pg=1"
+        "/ybdy/play?v_id=22574&r_id=8321&r=video&t=2&pg=1"
+        
+        "/ybdy/play?v_id=22584&r=video&t=2&pg=1"
 
     ]
 
@@ -128,7 +153,7 @@ class Config:
     VIDEO_COMPLETE_WAIT = 5
 
     # 单个视频最大播放时间 (秒, 防止卡死)
-    MAX_VIDEO_DURATION = 5400  # 1小时
+    MAX_VIDEO_DURATION = 7200  # 1小时
 
     # 点击播放后等待视频启动的时间 (秒)
     PLAY_START_WAIT = 2
@@ -165,10 +190,14 @@ class Config:
 
     # 验证码识别配置
     CAPTCHA_MAX_RETRIES = 3  # 验证码识别失败最大重试次数
-    CAPTCHA_PROMPT = "这是一张验证码图片，由大小写英文字母和数字组成，输出验证码实际的字符串"
+    CAPTCHA_PROMPT = "这是一张由大小写英文字母和数字组成的长度为5的验证码图片，请输出验证码实际的字符串不要输出额外任何东西"
 
     # 登录后等待时间（秒）
     LOGIN_WAIT_AFTER_SUBMIT = 3
+
+    # ===== 视频播放配置 =====
+    # 是否自动静音视频
+    AUTO_MUTE_VIDEO = True
 
 
 

@@ -430,6 +430,7 @@ class VideoAutomator:
         """等待视频播放完成"""
         start_time = datetime.now()
         check_interval = 5  # 每5秒检查一次
+        completion_detected = False  # 标记是否已检测到接近完成
 
         while self.session_active:
             try:
@@ -473,15 +474,32 @@ class VideoAutomator:
                         # 处理完成后的弹窗按钮（如"我知道了"）
                         await self._handle_completion_popup()
 
+                        logger.info(f"等待 {self.config.VIDEO_COMPLETE_WAIT} 秒后退出...")
                         await asyncio.sleep(self.config.VIDEO_COMPLETE_WAIT)
                         return
 
-                    # 定期输出播放进度
+                    # 检查播放进度
                     current = video_status.get('currentTime', 0)
                     duration = video_status.get('duration', 0)
                     if duration > 0:
                         progress = (current / duration) * 100
+
+                        # 定期输出播放进度
                         logger.debug(f"播放进度: {progress:.1f}% ({current:.0f}s / {duration:.0f}s)")
+
+                        # 检测到99.5%以上认为即将完成(因为点击弹窗会导致页面跳转,进度归零)
+                        if progress >= 99.5 and not completion_detected:
+                            completion_detected = True
+                            logger.info(f"🎉 视频播放进度已达到 {progress:.1f}%，即将完成")
+                            logger.info("停止弹窗监控，等待10秒后退出...")
+
+                            # 停止弹窗监控(设置session_active=False会停止_monitor_and_handle_popups)
+                            # 但我们还需要继续等待,所以使用临时标志
+                            self.session_active = False
+
+                            await asyncio.sleep(20)
+                            logger.info("✅ 视频播放完成，准备退出")
+                            return
 
                 # 检查超时
                 elapsed = (datetime.now() - start_time).total_seconds()
