@@ -46,42 +46,120 @@ class VideoAutomator:
         logger.info("视频自动化器初始化完成")
 
     async def start(self):
-        """启动自动化流程"""
+        """启动自动化流程 - 每个视频独立浏览器会话"""
         logger.info("=" * 60)
-        logger.info("视频自动化脚本启动 (简化版)")
+        logger.info("视频自动化脚本启动 (独立会话模式)")
         logger.info("=" * 60)
 
-        async with async_playwright() as p:
-            # 启动浏览器
-            self.browser = await self._launch_browser(p)
-            self.context = await self._setup_context(self.browser)
-            self.page = await self.context.new_page()
+        if not self.config.VIDEO_HREF_LIST:
+            logger.warning("⚠️  VIDEO_HREF_LIST 为空，请在 config.py 中配置视频列表")
+            return
+
+        logger.info(f"共有 {self.total_videos} 个视频待播放\n")
+
+        # 记录失败的视频
+        failed_videos = []
+
+        for idx, href in enumerate(self.config.VIDEO_HREF_LIST, 1):
+            logger.info("=" * 60)
+            logger.info(f"[{idx}/{self.total_videos}] 开始处理视频")
+            logger.info(f"URL: {self.config.VIDEO_SITE_URL}{href}")
+            logger.info("=" * 60)
 
             try:
-                self.session_active = True
+                # 为每个视频启动独立的浏览器会话
+                success = await self._play_single_video_session(href, idx)
 
-                # 步骤1: 登录（根据配置选择自动或手动）
-                if self.config.AUTO_LOGIN_ENABLED and self._validate_auto_login_config():
-                    await self._auto_login_flow()
+                if success:
+                    self.videos_completed += 1
+                    logger.info(f"✅ 视频 {idx}/{self.total_videos} 播放完成\n")
                 else:
-                    await self._manual_login_flow()
-
-                # 步骤2: 遍历并播放视频列表
-                await self._play_video_list()
-
-                logger.info("\n✅ 所有视频播放完成！")
+                    failed_videos.append((idx, href))
+                    logger.warning(f"❌ 视频 {idx}/{self.total_videos} 播放失败\n")
 
             except KeyboardInterrupt:
                 logger.info("\n用户中断，正在退出...")
+                break
             except Exception as e:
-                logger.error(f"自动化流程出错: {e}", exc_info=True)
-                await self._save_screenshot("error")
-            finally:
-                await self._cleanup()
+                logger.error(f"❌ 播放视频 {idx} 时出错: {e}", exc_info=True)
+                failed_videos.append((idx, href))
+
+                # 询问是否继续
+                try:
+                    response = input(f"\n视频 {idx} 播放失败，是否继续下一个？(y/n): ").strip().lower()
+                    if response != 'y':
+                        logger.info("用户选择停止")
+                        break
+                except:
+                    break
+
+        # 最终统计报告
+        logger.info("\n" + "=" * 60)
+        logger.info("播放统计报告")
+        logger.info("=" * 60)
+        logger.info(f"成功: {self.videos_completed}/{self.total_videos}")
+        logger.info(f"失败: {len(failed_videos)}/{self.total_videos}")
+
+        if failed_videos:
+            logger.info("\n失败的视频:")
+            for video_idx, video_href in failed_videos:
+                logger.info(f"  - 视频 {video_idx}: {video_href}")
 
         logger.info("=" * 60)
-        logger.info(f"完成视频: {self.videos_completed}/{self.total_videos}")
-        logger.info("=" * 60)
+
+    async def _play_single_video_session(self, href: str, video_index: int) -> bool:
+        """
+        为单个视频创建独立的浏览器会话
+
+        Args:
+            href: 视频相对路径
+            video_index: 视频序号
+
+        Returns:
+            bool: 是否成功播放完成
+        """
+        async with async_playwright() as p:
+            try:
+                # 1. 启动浏览器
+                self.browser = await self._launch_browser(p)
+                self.context = await self._setup_context(self.browser)
+                self.page = await self.context.new_page()
+                self.session_active = True
+
+                # 2. 自动登录
+                if self.config.AUTO_LOGIN_ENABLED and self._validate_auto_login_config():
+                    login_success = await self._auto_login_flow()
+                    if not login_success:
+                        logger.error("自动登录失败")
+                        return False
+                else:
+                    await self._manual_login_flow()
+
+                # 3. 跳转到视频页面
+                video_url = f"{self.config.VIDEO_SITE_URL.rstrip('/')}{href}"
+                logger.info(f"跳转到视频页面: {video_url}")
+                await self.page.goto(video_url, wait_until='domcontentloaded')
+                await asyncio.sleep(2)
+
+                # 4. 处理进入视频页面时的弹窗
+                await self._handle_entry_popup()
+
+                # 5. 播放视频
+                await self._play_single_video()
+
+                logger.info(f"视频 {video_index} 播放流程结束")
+                return True
+
+            except Exception as e:
+                logger.error(f"视频 {video_index} 会话出错: {e}", exc_info=True)
+                await self._save_screenshot(f"error_video_{video_index}")
+                return False
+
+            finally:
+                # 6. 关闭浏览器和清理资源
+                await self._cleanup()
+                # 等待资源完全释放
+                await asyncio.sleep(2)
 
     async def _launch_browser(self, playwright) -> Browser:
         """启动浏览器"""
@@ -115,11 +193,33 @@ class VideoAutomator:
             timezone_id='Asia/Shanghai',
         )
 
-        # 注入反检测脚本
-        await context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined,
+        # 注入反检测脚本和自动静音脚本
+        mute_script = ""
+        if self.config.AUTO_MUTE_VIDEO:
+            mute_script = """
+            // 自动静音所有视频
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('video').forEach(v => v.muted = true);
             });
+
+            // 监听新添加的视频元素
+            const observer = new MutationObserver(() => {
+                document.querySelectorAll('video').forEach(v => v.muted = true);
+            });
+            if (document.body) {
+                observer.observe(document.body, {childList: true, subtree: true});
+            } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                    observer.observe(document.body, {childList: true, subtree: true});
+                });
+            }
+            """
+
+        await context.add_init_script(f"""
+            Object.defineProperty(navigator, 'webdriver', {{
+                get: () => undefined,
+            }});
+            {mute_script}
         """)
 
         logger.info("浏览器上下文配置完成")
@@ -128,7 +228,7 @@ class VideoAutomator:
     async def _manual_login_flow(self):
         """手动登录流程"""
         logger.info("\n" + "=" * 60)
-        logger.info("步骤 1: 手动登录")
+        logger.info("步骤: 手动登录")
         logger.info("=" * 60)
 
         # 打开登录页面
@@ -145,61 +245,6 @@ class VideoAutomator:
 
         logger.info("✅ 用户确认已登录，继续执行...")
         await asyncio.sleep(2)  # 等待页面稳定
-
-    async def _play_video_list(self):
-        """播放视频列表"""
-        logger.info("\n" + "=" * 60)
-        logger.info("步骤 2: 自动播放视频列表")
-        logger.info("=" * 60)
-
-        if not self.config.VIDEO_HREF_LIST:
-            logger.warning("⚠️  VIDEO_HREF_LIST 为空，请在 config.py 中配置视频列表")
-            return
-
-        logger.info(f"共有 {self.total_videos} 个视频待播放\n")
-
-        for idx, href in enumerate(self.config.VIDEO_HREF_LIST, 1):
-            if not self.session_active:
-                logger.info("会话已停止，退出播放循环")
-                break
-
-            logger.info("=" * 60)
-            logger.info(f"[{idx}/{self.total_videos}] 播放视频")
-            logger.info(f"URL: {self.config.VIDEO_SITE_URL}{href}")
-            logger.info("=" * 60)
-
-            try:
-                # 跳转到视频页面
-                video_url = f"{self.config.VIDEO_SITE_URL.rstrip('/')}{href}"
-                await self.page.goto(video_url, wait_until='domcontentloaded')
-                await asyncio.sleep(2)
-
-                # 处理进入视频页面时的弹窗（如"我知道了"按钮）
-                await self._handle_entry_popup()
-
-                # 播放视频
-                await self._play_single_video()
-
-                self.videos_completed += 1
-                logger.info(f"✅ 视频 {idx} 播放完成\n")
-
-                # 每个视频播放完成后重新登录（避免超时）
-                if self.config.AUTO_LOGIN_ENABLED and idx < self.total_videos:
-                    logger.info("重新登录以避免超时...")
-                    await self._auto_login_flow()
-
-            except Exception as e:
-                logger.error(f"❌ 播放视频 {idx} 时出错: {e}")
-                await self._save_screenshot(f"error_video_{idx}")
-
-                # 询问是否继续
-                try:
-                    response = input(f"\n视频 {idx} 播放失败，是否继续下一个？(y/n): ").strip().lower()
-                    if response != 'y':
-                        logger.info("用户选择停止")
-                        break
-                except:
-                    break
 
     async def _handle_entry_popup(self):
         """处理进入视频页面时的弹窗（如"我知道了"按钮）"""
@@ -285,6 +330,19 @@ class VideoAutomator:
                     logger.info("尝试点击 Plyr 播放按钮...")
                     await plyr_button.click()
                     await asyncio.sleep(self.config.PLAY_START_WAIT)
+
+                    # 点击后设置静音
+                    if self.config.AUTO_MUTE_VIDEO:
+                        try:
+                            await self.page.evaluate(f"""
+                                () => {{
+                                    const video = document.querySelector('{self.config.VIDEO_PLAYER_SELECTOR}');
+                                    if (video) video.muted = true;
+                                }}
+                            """)
+                        except:
+                            pass
+
                     play_success = True
                     logger.info("✅ 通过 Plyr 按钮播放成功")
         except Exception as e:
@@ -294,10 +352,12 @@ class VideoAutomator:
         if not play_success:
             try:
                 logger.info("尝试使用 JavaScript 播放...")
+                mute_code = "video.muted = true;" if self.config.AUTO_MUTE_VIDEO else ""
                 result = await self.page.evaluate(f"""
                     () => {{
                         const video = document.querySelector('{self.config.VIDEO_PLAYER_SELECTOR}');
                         if (video) {{
+                            {mute_code}
                             video.play();
                             return true;
                         }}
@@ -451,14 +511,40 @@ class VideoAutomator:
             logger.error(f"保存截图失败: {e}")
 
     async def _cleanup(self):
-        """清理资源"""
+        """清理资源 - 完全关闭浏览器并重置状态"""
         logger.info("正在清理资源...")
 
         self.session_active = False
 
-        # 关闭浏览器
-        if self.browser:
-            await self.browser.close()
+        try:
+            # 关闭页面
+            if self.page:
+                try:
+                    await self.page.close()
+                except Exception as e:
+                    logger.debug(f"关闭页面时出错: {e}")
+                self.page = None
+
+            # 关闭上下文
+            if self.context:
+                try:
+                    await self.context.close()
+                except Exception as e:
+                    logger.debug(f"关闭上下文时出错: {e}")
+                self.context = None
+
+            # 关闭浏览器
+            if self.browser:
+                try:
+                    await self.browser.close()
+                except Exception as e:
+                    logger.debug(f"关闭浏览器时出错: {e}")
+                self.browser = None
+
+            logger.info("✅ 浏览器已完全关闭")
+
+        except Exception as e:
+            logger.error(f"清理资源时出错: {e}")
 
         logger.info("资源清理完成")
 
