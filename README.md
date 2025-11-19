@@ -5,11 +5,11 @@
 食用方法
 
 1. 下载uv（没装的自己搜）
-2. 去云雾api注册，充五块钱，创建一个gemini分组的apikeyß
+2. 去云雾api注册，充五块钱，创建一个gemini分组的apikey
 3. 通过git拉到本地
 4. uv sync 一下
-5. 在config.py中修改一下自己的账号密码apikeyß
+5. 在config.py中修改一下自己的账号密码apikey
 6. source .venv/bin/activate
 7. playwright install chrome
 8. python main.py
-9. 有任何问题请提request（虽然大概率没时间看ß）
+9. 有任何问题请提request（虽然大概率没时间看）

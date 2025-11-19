@@ -14,7 +14,7 @@ class Config:
     # 视频列表 - 相对路径的href列表
     # 例如: ["/course/video/1", "/course/video/2"]
     VIDEO_HREF_LIST = [
-        "/ybdy/play?v_id=21612&r_id=80173&r=video&t=2&pg=1",
+        # "/ybdy/play?v_id=21612&r_id=80173&r=video&t=2&pg=1",
         "/ybdy/play?v_id=21612&r_id=80174&r=video&t=2&pg=1",
 
         "/ybdy/play?v_id=21625&r_id=80198&r=video&t=2&pg=1",
@@ -80,7 +80,12 @@ class Config:
     VIDEO_PLAYER_SELECTOR = "video"
 
     # "继续"按钮选择器（中途弹窗）
-    CONTINUE_BUTTON_SELECTOR = "button:has-text('继续')"
+    # 使用多个选择器以支持不同的弹窗按钮文本（"继续"、"我知道了"等）
+    CONTINUE_BUTTON_SELECTORS = [
+        "xpath=/html/body/div[5]/div[3]/a",  # 主要的弹窗按钮
+        "//a[contains(text(), '继续')]",     # 包含"继续"文本的链接
+        "//a[contains(text(), '我知道了')]",  # 包含"我知道了"文本的链接
+    ]
 
     # "视频播放完成"弹窗选择器
     COMPLETE_POPUP_SELECTOR = ".popup:has-text('视频播放完成'), .modal:has-text('视频播放完成'), [class*='complete']"
@@ -109,8 +114,8 @@ class Config:
     HEADLESS = False
 
     # 浏览器窗口大小
-    VIEWPORT_WIDTH = 1920
-    VIEWPORT_HEIGHT = 1080
+    VIEWPORT_WIDTH = 1280
+    VIEWPORT_HEIGHT = 720
 
     # User-Agent
     USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -143,12 +148,12 @@ class Config:
     AUTO_LOGIN_ENABLED = True
 
     # 登录凭证（请填写你的账号密码）
-    LOGIN_USERNAME = ""  # 请填写你的账号
-    LOGIN_PASSWORD = ""  # 请填写你的密码
+    LOGIN_USERNAME = "2022007091"  # 请填写你的账号
+    LOGIN_PASSWORD = "Yanwanxuan040119"  # 请填写你的密码
 
     # 验证码识别 API 配置
     CAPTCHA_API_BASE_URL = "https://yunwu.ai/v1/chat/completions"  # API URL，例如 "https://api.example.com/v1/chat/completions"
-    CAPTCHA_API_KEY = ""  # 请填写你的 API Key
+    CAPTCHA_API_KEY = "sk-KramS0jsUFUrjCN3SMQRiAaYTdFU2WZpgVzX79e5L9QmSKir"  # 请填写你的 API Key
     CAPTCHA_MODEL = "gemini-2.5-pro"  # 使用的模型
 
     # 登录页面 XPath 选择器

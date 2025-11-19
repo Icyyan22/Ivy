@@ -336,20 +336,29 @@ class VideoAutomator:
 
     async def _monitor_and_handle_popups(self):
         """监控并处理弹窗"""
+        logger.info(f"开始监控弹窗 (检测间隔: {self.config.POPUP_CHECK_INTERVAL}秒)")
+
         while self.session_active:
             try:
-                # 检查是否有"继续"按钮的弹窗
-                continue_button = await self.page.query_selector(
-                    self.config.CONTINUE_BUTTON_SELECTOR
-                )
+                # 遍历所有可能的"继续"按钮选择器
+                for selector in self.config.CONTINUE_BUTTON_SELECTORS:
+                    try:
+                        continue_button = await self.page.query_selector(selector)
 
-                if continue_button:
-                    is_visible = await continue_button.is_visible()
-                    if is_visible:
-                        logger.info("🔔 检测到'继续'弹窗，正在点击...")
-                        await continue_button.click()
-                        await asyncio.sleep(1)
-                        logger.info("✅ 已点击继续")
+                        if continue_button:
+                            is_visible = await continue_button.is_visible()
+                            if is_visible:
+                                # 获取按钮文本以便日志输出
+                                button_text = await continue_button.text_content()
+                                logger.info(f"🔔 检测到弹窗按钮: '{button_text.strip()}' (选择器: {selector})")
+                                logger.info("正在点击...")
+                                await continue_button.click()
+                                await asyncio.sleep(1)
+                                logger.info("✅ 已点击弹窗按钮")
+                                break  # 找到并点击后退出循环
+                    except Exception as e:
+                        logger.debug(f"检查选择器 {selector} 时出错: {e}")
+                        continue
 
                 await asyncio.sleep(self.config.POPUP_CHECK_INTERVAL)
 
