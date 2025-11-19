@@ -128,7 +128,7 @@ class Config:
     VIDEO_COMPLETE_WAIT = 5
 
     # 单个视频最大播放时间 (秒, 防止卡死)
-    MAX_VIDEO_DURATION = 3600  # 1小时
+    MAX_VIDEO_DURATION = 5400  # 1小时
 
     # 点击播放后等待视频启动的时间 (秒)
     PLAY_START_WAIT = 2
@@ -148,12 +148,12 @@ class Config:
     AUTO_LOGIN_ENABLED = True
 
     # 登录凭证（请填写你的账号密码）
-    LOGIN_USERNAME = "2022007091"  # 请填写你的账号
-    LOGIN_PASSWORD = "Yanwanxuan040119"  # 请填写你的密码
+    LOGIN_USERNAME = ""  # 请填写你的账号
+    LOGIN_PASSWORD = ""  # 请填写你的密码
 
     # 验证码识别 API 配置
     CAPTCHA_API_BASE_URL = "https://yunwu.ai/v1/chat/completions"  # API URL，例如 "https://api.example.com/v1/chat/completions"
-    CAPTCHA_API_KEY = "sk-KramS0jsUFUrjCN3SMQRiAaYTdFU2WZpgVzX79e5L9QmSKir"  # 请填写你的 API Key
+    CAPTCHA_API_KEY = ""  # 请填写你的 API Key
     CAPTCHA_MODEL = "gemini-2.5-pro"  # 使用的模型
 
     # 登录页面 XPath 选择器
